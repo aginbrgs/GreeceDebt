@@ -1,11 +1,8 @@
 import pandas as pd
-from statsmodels.tsa.arima.model import ARIMA
 import matplotlib.pyplot as plt
 import statsmodels.api as sm
 from statsmodels.tsa.ar_model import AutoReg
 import numpy as np
-import seaborn as sns
-from statsmodels.stats.stattools import durbin_watson
 
 #This code expects macroeconomic data containing Tax Revenue in % GDP, Social Expenditure in % GDP, Growth in % GDP and a dummy for two countries you want to compare
 
