@@ -6,7 +6,7 @@ import numpy as np
 
 #This code expects macroeconomic data containing Tax Revenue in % GDP, Social Expenditure in % GDP, Growth in % GDP and a dummy for two countries you want to compare
 
-file_path = r"C:\Users\Borgsman\Desktop\project\df_combined_with_dummy.csv"
+file_path = r"YourDataPath.csv" # Enter your Path here
 df  = pd.read_csv(file_path)
 
 
@@ -26,10 +26,10 @@ y_clean = y[X_clean.index]
 
 ols_model = sm.OLS(y_clean, X_clean).fit()                      #Fitiing OLS
 
-Autocor = sm.tsa.acf(ols_model.resid,fft=False,nlags=1)[1] #Function used to calculate the autocorrelation in time series
-y_transformed = y_clean.diff().dropna() - Autocor * y_clean.shift(1).dropna() #Calculating
+Autocor = sm.tsa.acf(ols_model.resid,fft=False,nlags=1)[1] #Calculate the autocorrelation in time series with a lag of 1
+y_transformed = y_clean.diff().dropna() - Autocor * y_clean.shift(1).dropna() #De autocorrelated version of original time series 
 X_transformed = X_clean.diff().dropna() - Autocor * X_clean.shift(1).dropna()
 
-gls = sm.GLS(y_transformed,X_transformed).fit()
+gls = sm.GLS(y_transformed,X_transformed).fit() #Fitting GLS
 print(gls.summary())
 
