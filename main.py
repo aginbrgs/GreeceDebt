@@ -24,7 +24,7 @@ X_clean = X_clean.dropna()
 y_clean = y[X_clean.index]
 
 
-ols_model = sm.OLS(y_clean, X_clean).fit()                      #Fitiing OLS
+ols_model = sm.OLS(y_clean, X_clean).fit()                      #Fitting OLS
 
 Autocor = sm.tsa.acf(ols_model.resid,fft=False,nlags=1)[1] #Calculate the autocorrelation in time series with a lag of 1
 y_transformed = y_clean.diff().dropna() - Autocor * y_clean.shift(1).dropna() #De autocorrelated version of original time series 
