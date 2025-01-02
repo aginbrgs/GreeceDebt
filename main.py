@@ -1,35 +1,43 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import statsmodels.api as sm
-from statsmodels.tsa.ar_model import AutoReg
 import numpy as np
+from sklearn.preprocessing import StandardScaler
+from io import BytesIO
 
-#This code expects macroeconomic data containing Tax Revenue in % GDP, Social Expenditure in % GDP, Growth in % GDP and a dummy for two countries you want to compare
+# This code expects macroeconomic data containing Tax Revenue in % GDP, Social Expenditure in % GDP, Growth in % GDP, and a dummy for two countries you want to compare
 
-file_path = r"YourDataPath.csv" # Enter your Path here
+file_path = r"C:\Users\Borgsman\Desktop\project\combined_greece_spain.csv"
 df  = pd.read_csv(file_path)
+df = df.dropna()
+
+# Splitting the data at the crash date and ensuring it's int
+df['Post Crash'] = (df['TIME_PERIOD'] >= 2011).astype(int)
+df['Treat'] = df['dummy']
+df['Post_Treat'] = df['Treat'] * df['Post Crash']
+df['Fiscal Balance'] = df['Social Expenditure in % of GDP'] * df['Tax Revenue in % GDP']
+
+y = df['Interest in % GDP']
+X = df[['Growth', 'Fiscal Balance', 'Post_Treat', 'Treat', 'Post Crash']]
+#Scaling to ensure that all variables have the same impact
+scaler_X = StandardScaler()
+scaler_y = StandardScaler()
 
 
-#Here you should introduce your crash date
-df_before2010=df[df['TIME_PERIOD']<2010]
-df_after2010=df[df['TIME_PERIOD']>=2010]
-df['Pre_Crisis'] = (df['TIME_PERIOD'] <= 2011).astype(int)      
+X_scaled = scaler_X.fit_transform(X)
+y_scaled = scaler_y.fit_transform(y.values.reshape(-1, 1)).flatten()
+X_scaled = pd.DataFrame(X_scaled, columns=X.columns)
 
-y = df_before2010['Interest in % GDP']
-X = df_before2010[['Growth','Tax Revenue in % GDP','Social Expenditure in % of GDP','dummy']]
-X = sm.add_constant(X)
-#Defining target variable and predictors
-X_clean = X.replace([np.inf,-np.inf,np.nan])
-X_clean = X_clean.dropna()
-y_clean = y[X_clean.index]
+X_scaled_clean = X_scaled.replace([np.inf, -np.inf, np.nan], np.nan).dropna()
+y_scaled_clean = y_scaled[X_scaled_clean.index]
+#Differencing to Remove Trends
+y_transformed = pd.Series(y_scaled_clean).diff().dropna()
+X_transformed = X_scaled_clean.diff().dropna()
+#Adding Constant
+X_transformed = sm.add_constant(X_transformed)
 
-#Fitting OLS
-ols_model = sm.OLS(y_clean, X_clean).fit()
-#De autocorrelated version of original time series
-Autocor = sm.tsa.acf(ols_model.resid,fft=False,nlags=1)[1] 
-y_transformed = y_clean.diff().dropna() - Autocor * y_clean.shift(1).dropna()  
-X_transformed = X_clean.diff().dropna() - Autocor * X_clean.shift(1).dropna()
-#Output
-gls = sm.GLS(y_transformed,X_transformed).fit() #Fitting GLS
-print(gls.summary())
+Did_Model = sm.GLS(y_transformed, X_transformed).fit()
+print(Did_Model.summary())
+
+
 
